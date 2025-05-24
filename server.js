@@ -13,5 +13,5 @@ const gameServer = new Server({
 gameServer.define("game", GameRoom);
 
 const PORT = process.env.PORT || 3000;
-gameServer.listen(PORT);
+server.listen(PORT);  // <-- Cambiar gameServer.listen a server.listen
 console.log("Servidor corriendo en el puerto", PORT);
