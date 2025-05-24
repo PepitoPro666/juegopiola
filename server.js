@@ -1,21 +1,41 @@
+// server.js (Colyseus server)
+const colyseus = require("colyseus");
 const http = require("http");
 const express = require("express");
-const { Server } = require("colyseus");
-const { GameRoom } = require("./GameRoom");
 
 const app = express();
 const server = http.createServer(app);
+const gameServer = new colyseus.Server({ server });
 
-const gameServer = new Server({
-  server,
-});
+class GameRoom extends colyseus.Room {
+  onCreate() {
+    this.setState({
+      players: {}, // Store player data (id, x, y, name)
+    });
+
+    this.onMessage("move", (client, movement) => {
+      // Update player position
+      this.state.players[client.sessionId].x = movement.x;
+      this.state.players[client.sessionId].y = movement.y;
+    });
+  }
+
+  onJoin(client, options) {
+    console.log(`${options.name} joined!`);
+    // Initialize player with starting position and name
+    this.state.players[client.sessionId] = {
+      x: 400,
+      y: 300,
+      name: options.name,
+    };
+  }
+
+  onLeave(client) {
+    console.log(`${client.sessionId} left!`);
+    delete this.state.players[client.sessionId];
+  }
+}
 
 gameServer.define("game", GameRoom);
-
-app.get("/", (req, res) => {
-  res.send("Servidor Colyseus en funcionamiento");
-});
-
-const PORT = process.env.PORT || 3000;
-server.listen(PORT);  // <-- Cambiar gameServer.listen a server.listen
-console.log("Servidor corriendo en el puerto", PORT);
+gameServer.listen(2567);
+console.log("Server running on port 2567");
